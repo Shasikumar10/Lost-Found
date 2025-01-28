@@ -4,15 +4,13 @@ import { toast } from 'react-hot-toast';
 import { Camera, Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
-import { formatDistanceToNow } from 'date-fns';
-import { Profile } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 
 export default function ProfilePage() {
   const { user } = useAuth();
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
@@ -31,8 +29,27 @@ export default function ProfilePage() {
         .eq('id', user?.id)
         .single();
 
-      if (error) throw error;
-      setProfile(data);
+      if (error && error.code === 'PGRST116') {
+        // Profile doesn't exist yet, create one
+        const { data: newProfile, error: insertError } = await supabase
+          .from('profiles')
+          .insert([
+            {
+              id: user?.id,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            }
+          ])
+          .select()
+          .single();
+
+        if (insertError) throw insertError;
+        setProfile(newProfile);
+      } else if (error) {
+        throw error;
+      } else {
+        setProfile(data);
+      }
     } catch (error) {
       console.error('Error fetching profile:', error);
       toast.error('Failed to load profile');
@@ -68,14 +85,30 @@ export default function ProfilePage() {
     const file = e.target.files?.[0];
     if (!file || !user) return;
 
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('File size must be less than 5MB');
+      return;
+    }
+
+    // Validate file type
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      toast.error('Please upload a valid image file (JPEG, PNG, or WebP)');
+      return;
+    }
+
     setUploadingAvatar(true);
     try {
       // Upload image to Supabase Storage
       const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}-${Math.random()}.${fileExt}`;
-      const { error: uploadError, data } = await supabase.storage
+      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(fileName, file);
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: true
+        });
 
       if (uploadError) throw uploadError;
 
@@ -95,6 +128,7 @@ export default function ProfilePage() {
       setProfile(prev => prev ? { ...prev, avatar_url: publicUrl } : null);
       toast.success('Avatar updated successfully');
     } catch (error) {
+      console.error('Error uploading avatar:', error);
       toast.error('Failed to upload avatar');
     } finally {
       setUploadingAvatar(false);
@@ -147,7 +181,7 @@ export default function ProfilePage() {
                 <input
                   type="file"
                   className="hidden"
-                  accept="image/*"
+                  accept="image/jpeg,image/png,image/webp"
                   onChange={handleAvatarUpload}
                   disabled={uploadingAvatar}
                 />
@@ -244,7 +278,7 @@ export default function ProfilePage() {
                   required
                 >
                   <option value="">Select Year</option>
-                  {[1, 2, 3, 4, 5].map((year) => (
+                  {[1, 2, 3, 4].map((year) => (
                     <option key={year} value={year}>
                       Year {year}
                     </option>

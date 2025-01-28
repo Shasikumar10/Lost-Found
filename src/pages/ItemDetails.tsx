@@ -68,7 +68,7 @@ export default function ItemDetails() {
         .from('comments')
         .select(`
           *,
-          profiles:user_id (
+          profiles (
             full_name,
             avatar_url
           )
@@ -80,23 +80,45 @@ export default function ItemDetails() {
       setComments(data || []);
     } catch (error) {
       console.error('Error fetching comments:', error);
+      setComments([]);
     }
   }
 
   async function fetchClaim() {
+    if (!user || !id) return;
+    
     try {
       const { data, error } = await supabase
         .from('item_claims')
         .select('*')
         .eq('item_id', id)
-        .eq('claimed_by', user?.id)
-        .single();
+        .eq('claimed_by', user.id)
+        .maybeSingle();
 
       if (!error && data) {
         setClaim(data);
       }
     } catch (error) {
       console.error('Error fetching claim:', error);
+      setClaim(null);
+    }
+  }
+
+  async function handleDelete() {
+    if (!user || !item) return;
+
+    try {
+      const { error } = await supabase
+        .from('items')
+        .delete()
+        .eq('id', item.id)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+      toast.success('Item deleted successfully');
+      navigate('/');
+    } catch (error) {
+      toast.error('Failed to delete item');
     }
   }
 
@@ -349,13 +371,16 @@ export default function ItemDetails() {
                       disabled={uploadingProof}
                     >
                       <Upload className="w-4 h-4 mr-2" />
-                      {uploadingProof ? 'Uploading...' : 'Upload Proof'}
+                      Upload Proof of Ownership
                       <input
                         type="file"
-                        className="absolute inset-0 opacity-0 cursor-pointer"
-                        onChange={(e) =>
-                          e.target.files?.[0] && handleClaimSubmit(e.target.files[0])
-                        }
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleClaimSubmit(file);
+                        }}
+                        disabled={uploadingProof}
                       />
                     </Button>
                   </label>
@@ -486,7 +511,7 @@ export default function ItemDetails() {
                     </p>
                   </div>
                 </div>
-                <p className="text-gray-600 pl -10">{comment.content}</p>
+                <p className="text-gray-600 pl-10">{comment.content}</p>
               </div>
             ))}
           </div>

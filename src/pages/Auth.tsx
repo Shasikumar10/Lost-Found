@@ -6,11 +6,14 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/lib/supabase';
 
 export default function Auth() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { signIn, signUp } = useAuth();
@@ -21,8 +24,29 @@ export default function Auth() {
 
     try {
       if (isSignUp) {
-        await signUp(email, password);
-        toast.success('Account created! Please check your email to verify your account.');
+        // Sign up the user
+        const { data: authData, error: signUpError } = await signUp(email, password);
+        if (signUpError) throw signUpError;
+
+        // If signup successful, create the profile
+        if (authData?.user) {
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .insert([
+              {
+                id: authData.user.id,
+                full_name: fullName,
+                phone: phone,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+              }
+            ]);
+
+          if (profileError) throw profileError;
+        }
+
+        toast.success('Account created successfully! Please sign in.');
+        setIsSignUp(false); // Switch to sign in mode
       } else {
         await signIn(email, password);
         toast.success('Welcome back!');
@@ -59,6 +83,44 @@ export default function Auth() {
         <Card>
           <Card.Content>
             <form onSubmit={handleSubmit} className="space-y-4">
+              {isSignUp && (
+                <>
+                  <div>
+                    <label
+                      htmlFor="fullName"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
+                      Full Name
+                    </label>
+                    <Input
+                      id="fullName"
+                      type="text"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      required={isSignUp}
+                      className="w-full"
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="phone"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
+                      Phone Number
+                    </label>
+                    <Input
+                      id="phone"
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      required={isSignUp}
+                      className="w-full"
+                    />
+                  </div>
+                </>
+              )}
+
               <div>
                 <label
                   htmlFor="email"
