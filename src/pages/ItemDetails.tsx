@@ -349,16 +349,13 @@ export default function ItemDetails() {
                       disabled={uploadingProof}
                     >
                       <Upload className="w-4 h-4 mr-2" />
-                      Upload Proof of Ownership
+                      {uploadingProof ? 'Uploading...' : 'Upload Proof'}
                       <input
                         type="file"
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                        accept="image/*"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) handleClaimSubmit(file);
-                        }}
-                        disabled={uploadingProof}
+                        className="absolute inset-0 opacity-0 cursor-pointer"
+                        onChange={(e) =>
+                          e.target.files?.[0] && handleClaimSubmit(e.target.files[0])
+                        }
                       />
                     </Button>
                   </label>
