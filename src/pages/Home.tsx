@@ -1,11 +1,16 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { SearchFilters } from '@/components/SearchFilters';
 import { ItemCard } from '@/components/ItemCard';
+import { EmptyState } from '@/components/EmptyState';
+import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { supabase } from '@/lib/supabase';
 import { Item } from '@/types';
 import { toast } from 'react-hot-toast';
+import { Search, PlusCircle } from 'lucide-react';
 
 export default function Home() {
+  const navigate = useNavigate();
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -60,22 +65,39 @@ export default function Home() {
     item.location.toLowerCase().includes(search.toLowerCase())
   );
 
+  if (loading) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <SearchFilters
         onSearch={setSearch}
         onFilterChange={setFilters}
       />
 
-      {loading ? (
-        <div className="text-center py-8">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-gray-200 border-t-blue-600" />
-          <p className="mt-2 text-gray-500">Loading items...</p>
-        </div>
-      ) : filteredItems.length === 0 ? (
-        <div className="text-center py-8">
-          <p className="text-gray-500">No items found matching your criteria</p>
-        </div>
+      {filteredItems.length === 0 ? (
+        <EmptyState
+          icon={search ? Search : PlusCircle}
+          title={search ? 'No items found' : 'No items yet'}
+          description={
+            search
+              ? 'Try adjusting your search or filters'
+              : 'Start by reporting a lost or found item'
+          }
+          action={
+            !search
+              ? {
+                  label: 'Report Item',
+                  onClick: () => navigate('/report'),
+                }
+              : undefined
+          }
+        />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredItems.map((item) => (

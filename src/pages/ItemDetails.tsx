@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
-import { MapPin, Calendar, Tag, MessageCircle, Edit2, Trash2, Upload } from 'lucide-react';
+import { MapPin, Calendar, Tag, MessageCircle, Edit2, Trash2, Upload, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -95,12 +95,30 @@ export default function ItemDetails() {
         .eq('claimed_by', user.id)
         .maybeSingle();
 
-      if (!error && data) {
+      if (!error) {
         setClaim(data);
       }
     } catch (error) {
       console.error('Error fetching claim:', error);
       setClaim(null);
+    }
+  }
+
+  async function handleDelete() {
+    if (!user || !item) return;
+
+    try {
+      const { error } = await supabase
+        .from('items')
+        .delete()
+        .eq('id', item.id)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+      toast.success('Item deleted successfully');
+      navigate('/');
+    } catch (error) {
+      toast.error('Failed to delete item');
     }
   }
 
@@ -248,8 +266,20 @@ export default function ItemDetails() {
     );
   }
 
+  const ownerInitial = itemOwner?.full_name ? itemOwner.full_name[0].toUpperCase() : '?';
+
   return (
     <div className="max-w-4xl mx-auto space-y-6">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => navigate('/')}
+        className="mb-4 flex items-center gap-2"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        Back to Home
+      </Button>
+
       <Card>
         {item.image_url && (
           <img
@@ -288,7 +318,7 @@ export default function ItemDetails() {
                   <Edit2 className="w-4 h-4 mr-2" />
                   Edit
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => handleDelete()}>
+                <Button variant="outline" size="sm" onClick={handleDelete}>
                   <Trash2 className="w-4 h-4 mr-2" />
                   Delete
                 </Button>
@@ -334,7 +364,7 @@ export default function ItemDetails() {
                     />
                   ) : (
                     <span className="text-lg text-gray-600">
-                      {itemOwner.full_name[0]}
+                      {ownerInitial}
                     </span>
                   )}
                 </div>
@@ -371,7 +401,11 @@ export default function ItemDetails() {
                       disabled={uploadingProof}
                     >
                       <Upload className="w-4 h-4 mr-2" />
+<<<<<<< HEAD
                       Upload Proof of Ownership
+=======
+                      {uploadingProof ? 'Uploading...' : 'Upload Proof of Ownership'}
+>>>>>>> a410107 (Fourth commit)
                       <input
                         type="file"
                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
@@ -490,7 +524,7 @@ export default function ItemDetails() {
               <div key={comment.id} className="border-b pb-4 last:border-0">
                 <div className="flex items-center gap-2 mb-2">
                   <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                    {(comment.profiles as any).avatar_url ? (
+                    {(comment.profiles as any)?.avatar_url ? (
                       <img
                         src={(comment.profiles as any).avatar_url}
                         alt={(comment.profiles as any).full_name}
@@ -498,13 +532,13 @@ export default function ItemDetails() {
                       />
                     ) : (
                       <span className="text-blue-600 font-medium">
-                        {(comment.profiles as any).full_name?.[0] || 'U'}
+                        {(comment.profiles as any)?.full_name?.[0] || 'U'}
                       </span>
                     )}
                   </div>
                   <div>
                     <p className="font-medium">
-                      {(comment.profiles as any).full_name || 'Anonymous'}
+                      {(comment.profiles as any)?.full_name || 'Anonymous'}
                     </p>
                     <p className="text-sm text-gray-500">
                       {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}

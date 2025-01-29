@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
-import { Camera, Loader2 } from 'lucide-react';
+import { Camera, Loader2, ArrowLeft, LogOut } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,12 @@ import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 
 export default function ProfilePage() {
+<<<<<<< HEAD
   const { user } = useAuth();
+=======
+  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
+>>>>>>> a410107 (Fourth commit)
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
@@ -135,6 +140,15 @@ export default function ProfilePage() {
     }
   }
 
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      navigate('/auth');
+    } catch (error) {
+      toast.error('Failed to sign out');
+    }
+  };
+
   if (!user) {
     return (
       <div className="text-center py-8">
@@ -159,6 +173,27 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
+      <div className="flex items-center justify-between mb-6">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate('/')}
+          className="flex items-center gap-2"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Home
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleSignOut}
+          className="flex items-center gap-2 text-red-600 hover:text-red-700"
+        >
+          <LogOut className="w-4 h-4" />
+          Sign Out
+        </Button>
+      </div>
+
       <Card>
         <Card.Content className="p-6">
           <div className="flex items-start gap-6">

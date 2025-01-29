@@ -12,19 +12,22 @@ interface ItemCardProps {
 export function ItemCard({ item }: ItemCardProps) {
   return (
     <Link to={`/items/${item.id}`}>
-      <Card>
+      <Card className="hover-scale transition-all duration-300">
         {item.image_url && (
-          <img
-            src={item.image_url}
-            alt={item.title}
-            className="h-48 w-full object-cover rounded-t-lg"
-          />
+          <div className="relative overflow-hidden rounded-t-lg">
+            <img
+              src={item.image_url}
+              alt={item.title}
+              className="h-48 w-full object-cover transition-transform duration-300 hover:scale-110"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 transition-opacity duration-300 hover:opacity-100" />
+          </div>
         )}
-        <Card.Content>
+        <Card.Content className="animate-fade-in">
           <div className="flex items-center justify-between mb-3">
             <Badge
               variant={item.type === 'lost' ? 'error' : 'success'}
-              className="uppercase"
+              className="uppercase animate-scale-in"
             >
               {item.type}
             </Badge>
@@ -36,29 +39,35 @@ export function ItemCard({ item }: ItemCardProps) {
                   ? 'success'
                   : 'default'
               }
-              className="capitalize"
+              className="capitalize animate-scale-in"
             >
               {item.status}
             </Badge>
           </div>
           
-          <h3 className="text-lg font-semibold mb-2 line-clamp-1">{item.title}</h3>
+          <h3 className="text-lg font-semibold mb-2 line-clamp-1 hover:text-blue-600 transition-colors">
+            {item.title}
+          </h3>
           <p className="text-gray-600 text-sm mb-4 line-clamp-2">
             {item.description}
           </p>
           
           <div className="space-y-2 text-sm text-gray-500">
-            <div className="flex items-center gap-2">
-              <MapPin className="w-4 h-4" />
-              <span>{item.location}</span>
+            <div className="flex items-center gap-2 group">
+              <MapPin className="w-4 h-4 group-hover:text-blue-600 transition-colors" />
+              <span className="group-hover:text-blue-600 transition-colors">{item.location}</span>
             </div>
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4" />
-              <span>{formatDistanceToNow(new Date(item.date), { addSuffix: true })}</span>
+            <div className="flex items-center gap-2 group">
+              <Calendar className="w-4 h-4 group-hover:text-blue-600 transition-colors" />
+              <span className="group-hover:text-blue-600 transition-colors">
+                {formatDistanceToNow(new Date(item.date), { addSuffix: true })}
+              </span>
             </div>
-            <div className="flex items-center gap-2">
-              <Tag className="w-4 h-4" />
-              <span className="capitalize">{item.category}</span>
+            <div className="flex items-center gap-2 group">
+              <Tag className="w-4 h-4 group-hover:text-blue-600 transition-colors" />
+              <span className="capitalize group-hover:text-blue-600 transition-colors">
+                {item.category}
+              </span>
             </div>
           </div>
         </Card.Content>

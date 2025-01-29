@@ -27,13 +27,21 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 function App() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-gray-200 border-t-blue-600" />
+      </div>
+    );
+  }
 
   return (
     <Router>
       <div className="min-h-screen bg-gray-50">
-        <Navbar />
-        <main className="container mx-auto px-4 py-8">
+        {user && <Navbar />}
+        <main className={`container mx-auto px-4 ${user ? 'py-8' : 'py-0'}`}>
           <Routes>
             <Route
               path="/"
@@ -63,7 +71,14 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            <Route path="/items/:id" element={<ItemDetails />} />
+            <Route
+              path="/items/:id"
+              element={
+                <ProtectedRoute>
+                  <ItemDetails />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/profile"
               element={
@@ -72,6 +87,7 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
         <Toaster position="bottom-right" />

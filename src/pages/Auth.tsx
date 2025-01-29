@@ -24,9 +24,25 @@ export default function Auth() {
 
     try {
       if (isSignUp) {
+<<<<<<< HEAD
         // Sign up the user
         const { data: authData, error: signUpError } = await signUp(email, password);
         if (signUpError) throw signUpError;
+=======
+        // Validate password strength
+        if (password.length < 6) {
+          throw new Error('Password must be at least 6 characters long');
+        }
+
+        // Sign up the user
+        const { data: authData, error: signUpError } = await signUp(email, password);
+        if (signUpError) {
+          if (signUpError.message.includes('already registered')) {
+            throw new Error('This email is already registered. Please sign in instead.');
+          }
+          throw signUpError;
+        }
+>>>>>>> a410107 (Fourth commit)
 
         // If signup successful, create the profile
         if (authData?.user) {
@@ -48,7 +64,13 @@ export default function Auth() {
         toast.success('Account created successfully! Please sign in.');
         setIsSignUp(false); // Switch to sign in mode
       } else {
-        await signIn(email, password);
+        const { error: signInError } = await signIn(email, password);
+        if (signInError) {
+          if (signInError.message.includes('Invalid login credentials')) {
+            throw new Error('Invalid email or password');
+          }
+          throw signInError;
+        }
         toast.success('Welcome back!');
         navigate('/');
       }
@@ -153,6 +175,11 @@ export default function Auth() {
                   required
                   className="w-full"
                 />
+                {isSignUp && (
+                  <p className="mt-1 text-sm text-gray-500">
+                    Password must be at least 6 characters long
+                  </p>
+                )}
               </div>
 
               <Button
